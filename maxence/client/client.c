@@ -6,16 +6,25 @@
 #include <unistd.h> // Pour close
 
 // Définition des constantes
+#define DECALAGE_CESAR 5 // Décalage pour le chiffrement de César
 #define PORT 1618 // Numéro de port utilisé pour la communication
-#define NUM_COUNT 8 // Nombre de nombres aléatoires à générer
+#define NUM_COUNT 2 // Nombre de nombres aléatoires à générer
 #define MAX_VALUE 2023 // Valeur maximale pour les nombres aléatoires
 //#define SERVER_IP "172.16.20.11" // Adresse IP du serveur (exemple pour un autre PC)
 #define SERVER_IP "127.0.0.1" // Adresse IP du serveur (localhost)
 
+// Fonction pour chiffrer un message avec le chiffrement de César
+void chiffrer_cesar(char *buffer) {
+    for (int i = 0; buffer[i] != '\0'; i++) {
+        if (buffer[i] >= 32 && buffer[i] <= 126) {
+            buffer[i] = ((buffer[i] - 32 + DECALAGE_CESAR) % 95) + 32;
+        }
+    }
+}
+
 int main() {
     int sockfd; // Descripteur de socket
     struct sockaddr_in server_addr; // Structure pour l'adresse du serveur
-    int numbers[NUM_COUNT]; // Tableau pour stocker les nombres aléatoires
     char buffer[1024]; // Buffer pour envoyer les données au serveur
 
     // Création de la socket
@@ -30,16 +39,12 @@ int main() {
     server_addr.sin_port = htons(PORT); // Convertir le port en format réseau
     server_addr.sin_addr.s_addr = inet_addr(SERVER_IP); // Convertir l'adresse IP en format réseau
 
-    // Génération de nombres aléatoires
-    srand(time(NULL)); // Initialiser le générateur de nombres aléatoires avec l'heure actuelle
-    for (int i = 0; i < NUM_COUNT; i++) {
-        numbers[i] = rand() % (MAX_VALUE + 1); // Générer un nombre aléatoire entre 0 et MAX_VALUE
-    }
-
     // Préparer le message à envoyer
-    snprintf(buffer, sizeof(buffer), "%d,%d,%d,%d,%d,%d,%d,%d",
-             numbers[0], numbers[1], numbers[2], numbers[3],
-             numbers[4], numbers[5], numbers[6], numbers[7]); // Formater les nombres en une chaîne séparée par des virgules
+    snprintf(buffer, sizeof(buffer), "01-12-2024,10-10-30,18.00,62.00"); // Formater les nombres en une chaîne séparée par des virgules
+
+    // Chiffrer le message avec le chiffrement de César
+    chiffrer_cesar(buffer); // Appliquer le chiffrement de César sur le message
+    printf("Message to send: %s\n", buffer); // Afficher le message avant l'envoi
 
     printf("Sending to IP: %s, Port: %d\n", SERVER_IP, PORT); // Afficher l'adresse IP et le port du serveur
 
