@@ -5,75 +5,18 @@
 #include <unistd.h>
 
 // Définition des constantes
+#define DECALAGE_CESAR 5 // Décalage pour le chiffrement de César
 #define LENGTH 28  // Taille d'un buffer pour fgets (non utilisé ici)
 #define PORT 1618  // Port sur lequel le serveur écoute
 #define BUFFER_SIZE 1024  // Taille maximale du buffer pour recevoir des données
 
-// Fonction pour trouver l'indice du minimum dans un tableau
-int min(int *tableau, int size) {
-    int index = 0;
-
-    for (int i = 1; i < size; i++) {
-        if (tableau[i] < tableau[index] && tableau[i] != -1) { // Ignorer les valeurs marquées comme -1
-            index = i;
+// Fonction pour déchiffrer un message avec le chiffrement de César
+void dechiffrer_cesar(char *buffer) {
+    for (int i = 0; buffer[i] != '\0'; i++) {
+        if (buffer[i] >= 32 && buffer[i] <= 126) {
+            buffer[i] = ((buffer[i] - 32 - DECALAGE_CESAR + 95) % 95) + 32;
         }
     }
-
-    return index; // Retourne l'indice de la plus petite valeur
-}
-
-// Fonction pour trouver l'indice du maximum dans un tableau
-int max(int *tableau, int size) {
-    int index = 0;
-
-    for (int i = 1; i < size; i++) {
-        if (tableau[i] > tableau[index]) { // Comparer les valeurs pour trouver le maximum
-            index = i;
-        }
-    }
-
-    return index; // Retourne l'indice de la plus grande valeur
-}
-
-// Fonction pour calculer la moyenne des éléments d'un tableau
-int calcul_moyenne(int *tableau, int size) {
-    int somme = 0;
-
-    for (int i = 0; i < size; i++) {
-        somme += tableau[i]; // Ajouter chaque élément à la somme
-    }
-
-    return somme / size; // Retourner la moyenne (division entière)
-}
-
-// Fonction pour isoler les nombres d'une chaîne de caractères et les stocker dans un tableau
-void IsolatioNumber(char *chaine, int *tableau) {
-    int number = 0, index = 0, i = 0;
-
-    printf("Chaîne à traiter : ");
-    for (int j = 0; chaine[j] != '\0'; j++) {
-        printf("%c", chaine[j]); // Afficher chaque caractère de la chaîne
-    }
-    printf("\n");
-
-    while (chaine[index] != '\0') {
-        if (chaine[index] >= '0' && chaine[index] <= '9') { // Si le caractère est un chiffre
-            number = number * 10 + (chaine[index] - '0'); // Construire le nombre
-        } else if (chaine[index] == ',') { // Si c'est une virgule
-            tableau[i++] = number; // Ajouter le nombre au tableau
-            number = 0; // Réinitialiser le nombre
-        }
-        index++; // Passer au caractère suivant
-    }
-
-    tableau[i] = number; // Ajouter le dernier nombre après la dernière virgule
-
-    // Afficher les valeurs extraites pour débogage
-    printf("Valeurs extraites : ");
-    for (int j = 0; j <= i; j++) {
-        printf("%d ", tableau[j]);
-    }
-    printf("\n");
 }
 
 // Fonction pour convertir une chaîne de caractères en tableau d'entiers
@@ -91,27 +34,6 @@ void convertBufferToIntArray(char *buffer, int *tableau, int *size) {
     }
     tableau[i++] = number; // Ajouter le dernier nombre
     *size = i; // Mettre à jour la taille du tableau
-}
-
-// Fonction pour traiter un tableau d'entiers
-void treatment(int *tableau, int size) {
-    // Afficher le tableau initial
-    printf("Tableau initial : ");
-    for (int i = 0; i < size; i++) {
-        printf("%d ", tableau[i]);
-    }
-    printf("\n");
-
-    // Calculer et afficher la moyenne de tous les éléments
-    printf("Moyenne : %d\n", calcul_moyenne(tableau, size));
-
-    // Trouver et afficher la valeur minimale
-    int minIndex = min(tableau, size);
-    printf("Valeur minimale : %d (à l'indice %d)\n", tableau[minIndex], minIndex);
-
-    // Trouver et afficher la valeur maximale
-    int maxIndex = max(tableau, size);
-    printf("Valeur maximale : %d (à l'indice %d)\n", tableau[maxIndex], maxIndex);
 }
 
 int main() {
@@ -151,8 +73,9 @@ int main() {
         }
 
         buffer[n] = '\0'; // Terminer la chaîne reçue avec un caractère nul
+        dechiffrer_cesar(buffer); // Déchiffrer le message reçu
         printf("Received IP tram: %s\n", buffer);
-
+        /*
         // Convertir le buffer en tableau d'entiers
         int tableau[8]; // Tableau de taille fixe pour stocker les entiers
         int size = 0; // Taille réelle des données dans le tableau
@@ -160,10 +83,10 @@ int main() {
 
         // Appeler la fonction de traitement avec le tableau d'entiers
         treatment(tableau, size); // Passer la taille réelle du tableau
+        */
     }
 
     // Fermer la socket (ce code est inatteignable dans ce cas)
     close(sockfd);
     return 0;
 }
-
