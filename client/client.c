@@ -143,8 +143,6 @@ int main() {
     char buffer[1024]; // Buffer pour envoyer les données au serveur
     const char *port = "/dev/ttyACM0"; // Chemin du port série (modifiez si nécessaire)
 
-    lireDepuisArduino(port, buffer); // Appelle la fonction pour lire les données depuis l'Arduino
-
     // Création de la socket
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         perror("Échec de la création de la socket"); // Afficher une erreur si la création échoue
@@ -164,20 +162,28 @@ int main() {
         exit(EXIT_FAILURE); // Quitter le programme en cas d'échec
     }
 
-    // Chiffrer le message avec le chiffrement de César
-    chiffrer_cesar(buffer); // Appliquer le chiffrement de César sur le message
-    printf("Message à envoyer : %s\n", buffer); // Afficher le message avant l'envoi
+    printf("Connexion au serveur réussie.\n");
 
-    // Envoyer le message au serveur
-    if (send(sockfd, buffer, strlen(buffer), 0) < 0) {
-        perror("Échec de l'envoi du message"); // Afficher une erreur si l'envoi échoue
-        close(sockfd); // Fermer la socket
-        exit(EXIT_FAILURE); // Quitter le programme en cas d'échec
+    // Boucle pour lire les données de l'Arduino et les envoyer au serveur
+    while (1) {
+        // Lire les données depuis l'Arduino
+        lireDepuisArduino(port, buffer); // Appelle la fonction pour lire les données depuis l'Arduino
+
+        // Chiffrer le message avec le chiffrement de César
+        chiffrer_cesar(buffer); // Appliquer le chiffrement de César sur le message
+        printf("Message à envoyer : %s\n", buffer); // Afficher le message avant l'envoi
+
+        // Envoyer le message au serveur
+        if (send(sockfd, buffer, strlen(buffer), 0) < 0) {
+            perror("Échec de l'envoi du message"); // Afficher une erreur si l'envoi échoue
+            close(sockfd); // Fermer la socket
+            exit(EXIT_FAILURE); // Quitter le programme en cas d'échec
+        }
+
+        printf("Message envoyé : %s\n", buffer); // Afficher le message envoyé
     }
 
-    printf("Message envoyé : %s\n", buffer); // Afficher le message envoyé
-
-    // Fermer la socket
-    close(sockfd); // Libérer les ressources associées à la socket
+    // Fermer la socket (jamais atteint ici à cause de la boucle infinie)
+    close(sockfd);
     return 0; // Terminer le programme avec succès
 }

@@ -69,25 +69,30 @@ int main() {
 
     printf("Le serveur écoute sur le port %d...\n", PORT);
 
-    // Accepter une connexion entrante
-    if ((new_socket = accept(sockfd, (struct sockaddr *)&client_addr, &addr_len)) < 0) {
-        perror("Échec de l'acceptation de la connexion");
-        close(sockfd);
-        exit(EXIT_FAILURE);
+    // Boucle infinie pour accepter et traiter les connexions entrantes
+    while (1) {
+        // Accepter une connexion entrante
+        new_socket = accept(sockfd, (struct sockaddr *)&client_addr, &addr_len);
+        if (new_socket < 0) {
+            perror("Échec de l'acceptation de la connexion");
+            continue; // Passe à la prochaine itération pour accepter une nouvelle connexion
+        }
+
+        // Recevoir des données du client
+        int n = recv(new_socket, buffer, BUFFER_SIZE, 0);
+        if (n < 0) {
+            perror("Échec de la réception");
+        } else {
+            buffer[n] = '\0'; // Terminer la chaîne reçue avec un caractère nul
+            dechiffrer_cesar(buffer); // Déchiffrer le message reçu
+            printf("Message reçu : %s\n", buffer);
+        }
+
+        // Fermer la socket pour cette connexion
+        close(new_socket);
     }
 
-    // Recevoir des données du client
-    int n = recv(new_socket, buffer, BUFFER_SIZE, 0);
-    if (n < 0) {
-        perror("Échec de la réception");
-    } else {
-        buffer[n] = '\0'; // Terminer la chaîne reçue avec un caractère nul
-        dechiffrer_cesar(buffer); // Déchiffrer le message reçu
-        printf("Message reçu : %s\n", buffer);
-    }
-
-    // Fermer les sockets
-    close(new_socket);
+    // Fermer la socket principale (jamais atteint ici à cause de la boucle infinie)
     close(sockfd);
     return 0;
 }
