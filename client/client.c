@@ -181,6 +181,9 @@ int main() {
         }
 
         printf("Message envoyé : %s\n", buffer); // Afficher le message envoyé
+
+        // Ajouter un délai de 1 seconde
+        sleep(1);
     }
 
     // Fermer la socket (jamais atteint ici à cause de la boucle infinie)
