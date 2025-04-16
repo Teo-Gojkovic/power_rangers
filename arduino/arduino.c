@@ -84,14 +84,13 @@ int lireDonneesArduino(int serial_port, float *temperature, float *humidite) {
     return 0; // Retourne 0 pour indiquer que tout s'est bien passé
 }
 
-int main() {
-    const char *port = "/dev/ttyACM0"; // Chemin du port série (modifiez si nécessaire)
-
+// Fonction pour lire les données depuis l'Arduino
+void lireDepuisArduino(const char *port) {
     // Ouvre et configure le port série
     int serial_port = ouvrirPortSerie(port);
     if (serial_port < 0) { // Si l'ouverture échoue
         printf("Impossible d’ouvrir le port série.\n");
-        return 1; // Quitte le programme avec une erreur
+        return; // Quitte la fonction en cas d'erreur
     }
 
     while (1) { // Boucle infinie pour lire les données en continu
@@ -110,5 +109,12 @@ int main() {
     }
 
     close(serial_port); // Ferme le port série (jamais atteint ici à cause de la boucle infinie)
-    return 0; // Quitte le programme (jamais atteint ici)
+}
+
+int main() {
+    const char *port = "/dev/ttyACM0"; // Chemin du port série (modifiez si nécessaire)
+
+    lireDepuisArduino(port); // Appelle la fonction pour lire les données depuis l'Arduino
+
+    return 0; // Quitte le programme
 }

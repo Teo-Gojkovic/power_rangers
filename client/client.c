@@ -2,6 +2,8 @@
 #include <stdlib.h> // Pour exit et rand
 #include <string.h> // Pour memset
 #include <time.h> // Pour srand et rand
+#include <fcntl.h>      // Pour ouvrir des fichiers ou des ports (ici, le port série)
+#include <termios.h>    // Pour configurer les paramètres du port série
 #include <arpa/inet.h> // Pour inet_addr et les structures réseau
 #include <unistd.h> // Pour close
 
@@ -19,10 +21,129 @@ void chiffrer_cesar(char *buffer) {
     }
 }
 
+// Fonction pour ouvrir et configurer un port série
+int ouvrirPortSerie(const char *port) {
+    // Ouvre le port série en mode lecture/écriture sans le lier au terminal
+    int serial_port = open(port, O_RDWR | O_NOCTTY);
+    if (serial_port < 0) { // Vérifie si l'ouverture a échoué
+        perror("Erreur d'ouverture du port série"); // Affiche un message d'erreur
+        return -1; // Retourne -1 pour indiquer une erreur
+    }
+
+    struct termios tty; // Structure pour stocker les paramètres du port série
+    memset(&tty, 0, sizeof tty); // Initialise la structure à zéro
+
+    // Récupère les paramètres actuels du port série
+    if (tcgetattr(serial_port, &tty) != 0) {
+        perror("Erreur tcgetattr"); // Affiche une erreur si la récupération échoue
+        close(serial_port); // Ferme le port série
+        return -1; // Retourne -1 pour indiquer une erreur
+    }
+
+    // Définit la vitesse de communication à 9600 bauds (standard pour Arduino)
+    cfsetispeed(&tty, B9600);
+    cfsetospeed(&tty, B9600);
+
+    // Configure les paramètres du port série :
+    tty.c_cflag &= ~PARENB; // Désactive la parité (aucun bit de vérification d'erreur)
+    tty.c_cflag &= ~CSTOPB; // Utilise 1 bit de stop (standard)
+    tty.c_cflag &= ~CSIZE;  // Efface les bits de taille
+    tty.c_cflag |= CS8;     // Définit 8 bits de données (standard)
+
+#ifdef CRTSCTS
+    tty.c_cflag &= ~CRTSCTS; // Désactive le contrôle de flux matériel (si défini)
+#endif
+    tty.c_cflag |= CREAD | CLOCAL; // Active la lecture et désactive le contrôle modem
+
+    // Configure le mode d'entrée/sortie :
+    tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); // Mode non canonique (lecture immédiate), pas d'écho
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY);         // Désactive le contrôle de flux logiciel
+    tty.c_oflag &= ~OPOST;                          // Pas de traitement de sortie
+
+    // Applique les paramètres immédiatement
+    tcsetattr(serial_port, TCSANOW, &tty);
+
+    return serial_port; // Retourne le descripteur du port série configuré
+}
+
+// Fonction pour lire les données envoyées par l'Arduino
+int lireDonneesArduino(int serial_port, float *temperature, float *humidite) {
+    char buffer[128]; // Tampon pour stocker la ligne reçue
+    memset(buffer, 0, sizeof(buffer)); // Initialise le tampon à zéro
+
+    int index = 0; // Position actuelle dans le tampon
+    char c; // Variable pour stocker chaque caractère lu
+
+    // Boucle pour lire les caractères un par un jusqu'à trouver un '\n' (fin de ligne)
+    while (read(serial_port, &c, 1) == 1) {
+        if (c == '\n') { // Si on trouve un '\n', on termine la chaîne
+            buffer[index] = '\0'; // Ajoute un caractère nul pour terminer la chaîne
+            break; // Sort de la boucle
+        }
+        if (index < sizeof(buffer) - 1) { // Si le tampon n'est pas plein
+            buffer[index++] = c; // Ajoute le caractère au tampon
+        }
+    }
+
+    if (index == 0) { // Si aucun caractère n'a été lu
+        return 1; // Retourne 1 pour indiquer qu'on attend encore des données
+    }
+
+    printf("Reçu : %s\n", buffer); // Affiche la ligne reçue
+
+    // Essaie d'extraire deux nombres flottants séparés par un point-virgule
+    if (sscanf(buffer, "%f;%f", temperature, humidite) != 2) {
+        fprintf(stderr, "Format invalide reçu : %s\n", buffer); // Affiche une erreur si le format est incorrect
+        return -1; // Retourne -1 pour indiquer une erreur
+    }
+
+    return 0; // Retourne 0 pour indiquer que tout s'est bien passé
+}
+
+// Fonction pour lire les données depuis l'Arduino
+void lireDepuisArduino(const char *port, char *formatted_data) {
+    // Ouvre et configure le port série
+    int serial_port = ouvrirPortSerie(port);
+    if (serial_port < 0) { // Si l'ouverture échoue
+        printf("Impossible d’ouvrir le port série.\n");
+        return; // Quitte la fonction en cas d'erreur
+    }
+
+    while (1) { // Boucle infinie pour lire les données en continu
+        float temp, hum; // Variables pour stocker la température et l'humidité
+        int result = lireDonneesArduino(serial_port, &temp, &hum); // Lit les données
+
+        if (result == 0) { // Si les données sont valides
+            // Récupérer la date et l'heure actuelles
+            time_t now = time(NULL);
+            struct tm *t = localtime(&now);
+
+            // Formater la chaîne avec la date, l'heure, la température et l'humidité
+            snprintf(formatted_data, 1024, "%02d-%02d-%04d,%02d-%02d-%02d,%.2f,%.2f",
+                     t->tm_mday, t->tm_mon + 1, t->tm_year + 1900, // Date : jour-mois-année
+                     t->tm_hour, t->tm_min, t->tm_sec,            // Heure : heure-minute-seconde
+                     temp, hum);                                 // Température et humidité
+
+            printf("Données formatées : %s\n", formatted_data); // Affiche les données formatées
+            break; // Quitte la boucle après avoir formaté les données
+        } else if (result == 1) { // Si aucune donnée n'a été reçue
+            printf("Waiting...\n"); // Affiche un message d'attente
+            sleep(1); // Attend 1 seconde avant de réessayer
+        } else { // Si une erreur s'est produite
+            printf("Erreur de lecture des données.\n"); // Affiche un message d'erreur
+        }
+    }
+
+    close(serial_port); // Ferme le port série
+}
+
 int main() {
     int sockfd; // Descripteur de socket
     struct sockaddr_in server_addr; // Structure pour l'adresse du serveur
     char buffer[1024]; // Buffer pour envoyer les données au serveur
+    const char *port = "/dev/ttyACM0"; // Chemin du port série (modifiez si nécessaire)
+
+    lireDepuisArduino(port, buffer); // Appelle la fonction pour lire les données depuis l'Arduino
 
     // Création de la socket
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -42,9 +163,6 @@ int main() {
         close(sockfd); // Fermer la socket
         exit(EXIT_FAILURE); // Quitter le programme en cas d'échec
     }
-
-    // Préparer le message à envoyer
-    snprintf(buffer, sizeof(buffer), "01-12-2024,10-10-30,18.00,62.00"); // Formater les données en une chaîne séparée par des virgules
 
     // Chiffrer le message avec le chiffrement de César
     chiffrer_cesar(buffer); // Appliquer le chiffrement de César sur le message
