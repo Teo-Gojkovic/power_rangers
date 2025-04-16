@@ -100,15 +100,8 @@ int lireDonneesArduino(int serial_port, float *temperature, float *humidite) {
     return 0; // Retourne 0 pour indiquer que tout s'est bien passé
 }
 
-// Fonction pour lire les données depuis l'Arduino
-void lireDepuisArduino(const char *port, char *formatted_data) {
-    // Ouvre et configure le port série
-    int serial_port = ouvrirPortSerie(port);
-    if (serial_port < 0) {
-        printf("Impossible d'ouvrir le port série.\n");
-        return;
-    }
-
+// Modifier la fonction lireDepuisArduino pour garder le port série ouvert
+void lireDepuisArduino(int serial_port, char *formatted_data) {
     // Une seule lecture
     float temp, hum;
     int result = lireDonneesArduino(serial_port, &temp, &hum);
@@ -124,10 +117,9 @@ void lireDepuisArduino(const char *port, char *formatted_data) {
                  t->tm_hour, t->tm_min, t->tm_sec,
                  temp, hum);
     }
-
-    close(serial_port);
 }
 
+// Modifier le main pour garder le port série ouvert
 int main() {
     int sockfd; // Descripteur de socket
     struct sockaddr_in server_addr; // Structure pour l'adresse du serveur
@@ -155,29 +147,41 @@ int main() {
 
     printf("Connexion au serveur réussie.\n");
 
+    // Ouvrir le port série une seule fois avant la boucle
+    int serial_port = ouvrirPortSerie(port);
+    if (serial_port < 0) {
+        printf("Impossible d'ouvrir le port série.\n");
+        close(sockfd);
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Port série ouvert avec succès.\n");
+
     // Boucle pour lire les données de l'Arduino et les envoyer au serveur
     while (1) {
         // Lire les données depuis l'Arduino
-        lireDepuisArduino(port, buffer); // Appelle la fonction pour lire les données depuis l'Arduino
+        lireDepuisArduino(serial_port, buffer);
 
         // Chiffrer le message avec le chiffrement de César
-        chiffrer_cesar(buffer); // Appliquer le chiffrement de César sur le message
-        printf("Message à envoyer : %s\n", buffer); // Afficher le message avant l'envoi
+        chiffrer_cesar(buffer);
+        printf("Message à envoyer : %s\n", buffer);
 
         // Envoyer le message au serveur
         if (send(sockfd, buffer, strlen(buffer), 0) < 0) {
-            perror("Échec de l'envoi du message"); // Afficher une erreur si l'envoi échoue
-            close(sockfd); // Fermer la socket
-            exit(EXIT_FAILURE); // Quitter le programme en cas d'échec
+            perror("Échec de l'envoi du message");
+            close(sockfd);
+            close(serial_port);
+            exit(EXIT_FAILURE);
         }
 
-        printf("Message envoyé : %s\n", buffer); // Afficher le message envoyé
+        printf("Message envoyé : %s\n", buffer);
 
         // Ajouter un délai de 1 seconde
         sleep(1);
     }
 
-    // Fermer la socket (jamais atteint ici à cause de la boucle infinie)
+    // Fermer les connexions (jamais atteint à cause de la boucle infinie)
+    close(serial_port);
     close(sockfd);
-    return 0; // Terminer le programme avec succès
+    return 0;
 }
