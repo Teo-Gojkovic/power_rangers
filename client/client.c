@@ -22,7 +22,6 @@ void chiffrer_cesar(char *buffer) {
     printf("Code sesar ok\n");
 }
 
-// Fonction pour ouvrir et configurer un port série
 int ouvrirPortSerie(const char *port) {
     // Ouvre le port série en mode lecture/écriture sans le lier au terminal
     int serial_port = open(port, O_RDWR | O_NOCTTY);
