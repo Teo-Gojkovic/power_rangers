@@ -104,37 +104,28 @@ int lireDonneesArduino(int serial_port, float *temperature, float *humidite) {
 void lireDepuisArduino(const char *port, char *formatted_data) {
     // Ouvre et configure le port série
     int serial_port = ouvrirPortSerie(port);
-    if (serial_port < 0) { // Si l'ouverture échoue
-        printf("Impossible d’ouvrir le port série.\n");
-        return; // Quitte la fonction en cas d'erreur
+    if (serial_port < 0) {
+        printf("Impossible d'ouvrir le port série.\n");
+        return;
     }
 
-    while (1) { // Boucle infinie pour lire les données en continu
-        float temp, hum; // Variables pour stocker la température et l'humidité
-        int result = lireDonneesArduino(serial_port, &temp, &hum); // Lit les données
+    // Une seule lecture
+    float temp, hum;
+    int result = lireDonneesArduino(serial_port, &temp, &hum);
 
-        if (result == 0) { // Si les données sont valides
-            // Récupérer la date et l'heure actuelles
-            time_t now = time(NULL);
-            struct tm *t = localtime(&now);
+    if (result == 0) {
+        // Récupérer la date et l'heure actuelles
+        time_t now = time(NULL);
+        struct tm *t = localtime(&now);
 
-            // Formater la chaîne avec la date, l'heure, la température et l'humidité
-            snprintf(formatted_data, 1024, "%02d-%02d-%04d,%02d-%02d-%02d,%.2f,%.2f",
-                     t->tm_mday, t->tm_mon + 1, t->tm_year + 1900, // Date : jour-mois-année
-                     t->tm_hour, t->tm_min, t->tm_sec,            // Heure : heure-minute-seconde
-                     temp, hum);                                 // Température et humidité
-
-            printf("Données formatées : %s\n", formatted_data); // Affiche les données formatées
-            break; // Quitte la boucle après avoir formaté les données
-        } else if (result == 1) { // Si aucune donnée n'a été reçue
-            printf("Waiting...\n"); // Affiche un message d'attente
-            sleep(1); // Attend 1 seconde avant de réessayer
-        } else { // Si une erreur s'est produite
-            printf("Erreur de lecture des données.\n"); // Affiche un message d'erreur
-        }
+        // Formater la chaîne avec la date, l'heure, la température et l'humidité
+        snprintf(formatted_data, 1024, "%02d-%02d-%04d,%02d-%02d-%02d,%.2f,%.2f",
+                 t->tm_mday, t->tm_mon + 1, t->tm_year + 1900,
+                 t->tm_hour, t->tm_min, t->tm_sec,
+                 temp, hum);
     }
 
-    close(serial_port); // Ferme le port série
+    close(serial_port);
 }
 
 int main() {
