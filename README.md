@@ -42,7 +42,7 @@ This project is a collaborative effort by our team as part of our school curricu
 3. Ensure the sensor is configured to send data to the server.
 4. Verify that the data is stored in the CSV file.
 
-## Structure du projet
+## Project structure
 ```
 power_rangers
     ├──chiffrement
