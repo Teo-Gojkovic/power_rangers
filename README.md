@@ -42,6 +42,22 @@ This project is a collaborative effort by our team as part of our school curricu
 3. Ensure the sensor is configured to send data to the server.
 4. Verify that the data is stored in the CSV file.
 
+## Project structure
+```
+power_rangers
+    ├──chiffrement
+    |   ├── clientUDP.c
+    |   ├── serveurUDP.c
+    |   └── README.md
+    ├──client
+    |   ├── client.c
+    |   ├── client
+    ├──server
+    |   ├── server.c
+    |   ├── server
+    ├──collab.md
+    ├──README.md 
+```
 ## Future Improvements
 
 - Add real-time data visualization.
