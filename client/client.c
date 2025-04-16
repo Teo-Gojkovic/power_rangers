@@ -100,26 +100,28 @@ int lireDonneesArduino(int serial_port, float *temperature, float *humidite) {
     return 0; // Retourne 0 pour indiquer que tout s'est bien passé
 }
 
-// Modifier la fonction lireDepuisArduino pour garder le port série ouvert
+// Modifier la fonction lireDepuisArduino pour accepter un port série déjà ouvert
 void lireDepuisArduino(int serial_port, char *formatted_data) {
-    // Une seule lecture
     float temp, hum;
     int result = lireDonneesArduino(serial_port, &temp, &hum);
 
     if (result == 0) {
-        // Récupérer la date et l'heure actuelles
         time_t now = time(NULL);
         struct tm *t = localtime(&now);
 
-        // Formater la chaîne avec la date, l'heure, la température et l'humidité
         snprintf(formatted_data, 1024, "%02d-%02d-%04d,%02d-%02d-%02d,%.2f,%.2f",
                  t->tm_mday, t->tm_mon + 1, t->tm_year + 1900,
                  t->tm_hour, t->tm_min, t->tm_sec,
                  temp, hum);
+        
+        return; // Succès
     }
+
+    // En cas d'erreur, mettre une chaîne vide
+    formatted_data[0] = '\0';
 }
 
-// Modifier le main pour garder le port série ouvert
+// Modifier le main pour gérer correctement la boucle et le port série
 int main() {
     int sockfd; // Descripteur de socket
     struct sockaddr_in server_addr; // Structure pour l'adresse du serveur
@@ -147,7 +149,7 @@ int main() {
 
     printf("Connexion au serveur réussie.\n");
 
-    // Ouvrir le port série une seule fois avant la boucle
+    // Ouvrir le port série une seule fois
     int serial_port = ouvrirPortSerie(port);
     if (serial_port < 0) {
         printf("Impossible d'ouvrir le port série.\n");
@@ -157,30 +159,31 @@ int main() {
 
     printf("Port série ouvert avec succès.\n");
 
-    // Boucle pour lire les données de l'Arduino et les envoyer au serveur
+    // Boucle principale
     while (1) {
-        // Lire les données depuis l'Arduino
         lireDepuisArduino(serial_port, buffer);
+        
+        if (strlen(buffer) > 0) {
+            // Chiffrer et envoyer seulement si on a des données valides
+            chiffrer_cesar(buffer);
+            printf("Message à envoyer : %s\n", buffer);
 
-        // Chiffrer le message avec le chiffrement de César
-        chiffrer_cesar(buffer);
-        printf("Message à envoyer : %s\n", buffer);
+            
+            if (send(sockfd, buffer, strlen(buffer), 0) < 0) {
+                perror("Échec de l'envoi du message");
+                close(sockfd);
+                close(serial_port);
+                exit(EXIT_FAILURE);
+            }
 
-        // Envoyer le message au serveur
-        if (send(sockfd, buffer, strlen(buffer), 0) < 0) {
-            perror("Échec de l'envoi du message");
-            close(sockfd);
-            close(serial_port);
-            exit(EXIT_FAILURE);
+            printf("Message envoyé : %s\n", buffer);
         }
 
-        printf("Message envoyé : %s\n", buffer);
-
-        // Ajouter un délai de 1 seconde
+        // Délai entre chaque lecture
         sleep(1);
     }
 
-    // Fermer les connexions (jamais atteint à cause de la boucle infinie)
+    // Fermeture des connexions
     close(serial_port);
     close(sockfd);
     return 0;
