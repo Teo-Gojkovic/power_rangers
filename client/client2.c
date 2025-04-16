@@ -165,27 +165,59 @@ int main() {
     // Boucle principale
     while (1) {
         lireDepuisArduino(serial_port, buffer);
-        
-        
+
         if (strlen(buffer) > 0) {
             // Chiffrer et envoyer seulement si on a des données valides
-
             chiffrer_cesar(buffer);
-
-            
-
             printf("Message à envoyer : %s\n", buffer);
-        }
-        if (send(sockfd, buffer, strlen(buffer), 0) < 0) {
-            perror("Erreur lors de l'envoi du message");
-            // Gérer la reconnexion ou quitter en cas d'erreur critique
+
+            if (send(sockfd, buffer, strlen(buffer), 0) < 0) {
+                perror("Échec de l'envoi du message");
+                printf("Tentative de reconnexion au serveur...\n");
+
+                // Fermer la socket existante
+                close(sockfd);
+
+                // Réessayer de se connecter au serveur
+                while (1) {
+                    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+                        perror("Échec de la recréation de la socket");
+                        sleep(1); // Attendre avant de réessayer
+                        continue;
+                    }
+
+                    if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+                        perror("Échec de la reconnexion au serveur");
+                        close(sockfd);
+                        sleep(1); // Attendre avant de réessayer
+                        continue;
+                    }
+
+                    printf("Reconnexion au serveur réussie.\n");
+                    break; // Sortir de la boucle de reconnexion
+                }
+            } else {
+                printf("Message envoyé : %s\n", buffer);
+            }
+        } else {
+            printf("Aucune donnée valide reçue du port série.\n");
         }
 
-        printf("Message envoyé : %s\n", buffer);
-        
+        // Vérifier si le port série est toujours valide
+        if (serial_port < 0) {
+            perror("Port série invalide, tentative de réouverture...");
+            serial_port = ouvrirPortSerie(port);
+            if (serial_port < 0) {
+                printf("Impossible de rouvrir le port série. Arrêt du programme.\n");
+                break;
+            }
+        }
+
         // Délai entre chaque lecture
         printf("\n -------------------------------------- \n");
+        sleep(2);
     }
+
     printf("Sortie de la boucle principale.\n");
 
     // Fermeture des connexions

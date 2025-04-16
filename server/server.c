@@ -81,7 +81,7 @@ int main() {
         // Recevoir des données du client
         int n = recv(new_socket, buffer, BUFFER_SIZE, 0);
         if (n < 0) {
-            perror("Échec de la réception");
+            //perror("Échec de la réception");
         } else {
             buffer[n] = '\0'; // Terminer la chaîne reçue avec un caractère nul
             dechiffrer_cesar(buffer); // Déchiffrer le message reçu
