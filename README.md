@@ -45,10 +45,9 @@ This project is a collaborative effort by our team as part of our school curricu
 ## Project structure
 ```
 power_rangers
-    ├──chiffrement
-    |   ├── clientUDP.c
-    |   ├── serveurUDP.c
-    |   └── README.md
+    ├──arduino
+    |   ├── arduino.c
+    |   ├── arduino
     ├──client
     |   ├── client.c
     |   ├── client
