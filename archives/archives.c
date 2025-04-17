@@ -23,20 +23,34 @@ void extraction(char *data_recorded) { // ADRESSE où est stockée data_recorded
 
     if (le_gros_paf_de_maxime == NULL) { // SI fopen a échoué : interdiction d'écrire dans le fichier pour X raisons
         printf("Erreur lors de l'ouverture du fichier. \n");
+        return;
     }
 
     // Ecriture des données dans le fichier .csv
-    fprintf(le_gros_paf_de_maxime, "%s,%s,%f,%f.\n", date, time, temp, humidity);
+    fprintf(le_gros_paf_de_maxime, "%s ; %s ; %.1f ; %.1f.\n", date, time, temp, humidity);
 
     // Fermeture du fichier
     fclose(le_gros_paf_de_maxime);
 }
 
 int main() {
-    // Exemple de chaîne envoyée par Maxence
-    char data_recorded[] = "10-10-2024, 10-00-30, 24.4, 54.3";
 
-    extraction(data_recorded);
+
+    // Exemple de chaîne envoyée par Maxence
+    // char data_recorded[] = "10-10-2024, 10:00:30, 24.4, 54.3";
+    char *datas_recorded[] = {
+        "10-10-2024, 10:30:05, 24.4, 55",
+        "10-10-2024, 10:35:05, 26.4, 53",
+        "10-10-2024, 10:40:05, 25, 55"
+    };
+
+    for (int i = 0; i < 3; i++) {
+        extraction(datas_recorded[i]);
+        printf("%s\n", datas_recorded[i]); 
+        printf("---------\n");
+    }
+
+    extraction(*datas_recorded);
 
     return EXIT_SUCCESS;
 }
