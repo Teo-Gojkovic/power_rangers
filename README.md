@@ -64,11 +64,11 @@ power_rangers
 - Enhance system scalability.
 
 ## contributer 
-    - SarahGarf [https://github.com/SarahGarf]
-    - ElineBRD [https://github.com/ElineBRD] 
-    - MDulche [https://github.com/MDulche]
-    - Teo-Gojkovic [https://github.com/Teo-Gojkovic]
-    - pascalmaxime [https://github.com/pascalmaxime]
+[![SarahGarf](https://img.shields.io/badge/SarahGarf-222e45?style=for-the-badge&logo=github&logoColor=white)](https://github.com/SarahGarf)
+[![ElineBRD](https://img.shields.io/badge/ElineBRD-222e45?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ElineBRD)
+[![pascalmaxime](https://img.shields.io/badge/pascalmaxime-222e45?style=for-the-badge&logo=github&logoColor=white)](https://github.com/pascalmaxime)
+[![MDulche](https://img.shields.io/badge/MDulche-222e45?style=for-the-badge&logo=github&logoColor=white)](https://github.com/MDulche)
+[![Teo GOJKOVIC](https://img.shields.io/badge/Teo_GOJKOVIC-222e45?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Teo-Gojkovic)
 
 ## everyone's mission 
     - Teo-Gojkovic : team leader & Client/Server communication 
