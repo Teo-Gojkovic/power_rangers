@@ -1,16 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <netinet/tcp.h> // Pour TCP_NODELAY
 #include <time.h>
 #include <fcntl.h>
 #include <termios.h>
-#include <arpa/inet.h>
-#include <unistd.h>
 
 // Définition des constantes
-#define DECALAGE_CESAR 5
 #define PORT 1618
 #define SERVER_IP "127.0.0.1"
+#define DECALAGE_CESAR 5
 
 // Fonction pour chiffrer un message avec le chiffrement de César
 void chiffrer_cesar(char *buffer) {
@@ -56,7 +57,7 @@ int ouvrirPortSerie(const char *port) {
 }
 
 // Fonction pour lire les données envoyées par l'Arduino
-int lireDonneesArduino(int serial_port, float *temperature, float *humidite) {
+int lireDepuisArduino(int serial_port, char *formatted_data) {
     char buffer[128] = {0};
     int index = 0;
     char c;
@@ -77,46 +78,41 @@ int lireDonneesArduino(int serial_port, float *temperature, float *humidite) {
 
     printf("Reçu : %s\n", buffer);
 
-    if (sscanf(buffer, "%f;%f", temperature, humidite) != 2) {
-        fprintf(stderr, "Format invalide reçu : %s\n", buffer);
-        return -1;
-    }
+    // Formater les données avec un timestamp
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+    snprintf(formatted_data, 1024, "%02d-%02d-%04d,%02d-%02d-%02d,%s",
+             t->tm_mday, t->tm_mon + 1, t->tm_year + 1900,
+             t->tm_hour, t->tm_min, t->tm_sec,
+             buffer);
 
     return 0;
 }
 
-// Fonction pour lire les données depuis l'Arduino et les formater
-void lireDepuisArduino(int serial_port, char *formatted_data) {
-    float temp, hum;
-    int result = lireDonneesArduino(serial_port, &temp, &hum);
-
-    if (result == 0) {
-        time_t now = time(NULL);
-        struct tm *t = localtime(&now);
-
-        snprintf(formatted_data, 1024, "%02d-%02d-%04d,%02d-%02d-%02d,%.2f,%.2f",
-                 t->tm_mday, t->tm_mon + 1, t->tm_year + 1900,
-                 t->tm_hour, t->tm_min, t->tm_sec,
-                 temp, hum);
-    } else {
-        formatted_data[0] = '\0'; // En cas d'erreur, chaîne vide
-    }
-}
-
-// Fonction pour gérer la reconnexion au serveur
+// Fonction pour établir une connexion au serveur
 int connecter_au_serveur(struct sockaddr_in *server_addr) {
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-        perror("Erreur de création de la socket");
+        perror("Échec de la création de la socket");
         return -1;
     }
 
-    if (connect(sockfd, (struct sockaddr *)server_addr, sizeof(*server_addr)) < 0) {
-        perror("Erreur de connexion au serveur");
+    // Désactiver le Nagle's Algorithm pour envoyer les données immédiatement
+    int flag = 1;
+    if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void *)&flag, sizeof(flag)) < 0) {
+        perror("Erreur lors de la désactivation de Nagle's Algorithm");
         close(sockfd);
         return -1;
     }
 
+    // Connexion au serveur
+    if (connect(sockfd, (struct sockaddr *)server_addr, sizeof(*server_addr)) < 0) {
+        perror("Échec de la connexion au serveur");
+        close(sockfd);
+        return -1;
+    }
+
+    printf("Connexion au serveur réussie.\n");
     return sockfd;
 }
 
@@ -127,27 +123,17 @@ int main() {
     char buffer[1024];
     const char *port = "/dev/ttyACM0";
 
-    // Création de la socket
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        perror("Échec de la création de la socket");
-        exit(EXIT_FAILURE);
-    }
-
     // Configuration de l'adresse du serveur
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(PORT);
     server_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
 
-    // Connexion au serveur
-    if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("Échec de la connexion au serveur");
-        close(sockfd);
+    // Établir une première connexion
+    sockfd = connecter_au_serveur(&server_addr);
+    if (sockfd < 0) {
         exit(EXIT_FAILURE);
     }
-
-    printf("Connexion au serveur réussie.\n");
 
     // Ouverture du port série
     int serial_port = ouvrirPortSerie(port);
@@ -158,31 +144,52 @@ int main() {
 
     printf("Port série ouvert avec succès.\n");
 
-    // Boucle principale
+    // Boucle principale pour lire et envoyer les données
     while (1) {
-        lireDepuisArduino(serial_port, buffer);
-
-        if (strlen(buffer) > 0) {
+        if (lireDepuisArduino(serial_port, buffer) == 0) {
             chiffrer_cesar(buffer);
             printf("Message à envoyer : %s\n", buffer);
 
+            // Tentative d'envoi des données
             if (send(sockfd, buffer, strlen(buffer), 0) < 0) {
                 perror("Échec de l'envoi du message");
+
+                // Fermeture de la socket avant de tenter une reconnexion
                 close(sockfd);
 
+                // Tentative de reconnexion au serveur
                 printf("Tentative de reconnexion au serveur...\n");
-                while ((sockfd = connecter_au_serveur(&server_addr)) < 0) {
+                int reconnexion_reussie = 0;
+                for (int i = 0; i < 5; i++) { // Limite à 5 tentatives
+                    sockfd = connecter_au_serveur(&server_addr);
+                    if (sockfd >= 0) {
+                        printf("Reconnexion réussie.\n");
+                        reconnexion_reussie = 1;
+                        break;
+                    }
                     printf("Nouvelle tentative dans 2 secondes...\n");
                     sleep(2);
                 }
+
+                // Si la reconnexion échoue après 5 tentatives, quitter le programme
+                if (!reconnexion_reussie) {
+                    fprintf(stderr, "Impossible de se reconnecter au serveur après plusieurs tentatives. Arrêt du programme.\n");
+                    close(serial_port);
+                    exit(EXIT_FAILURE);
+                }
+
+                // Recommencer la boucle après une reconnexion réussie
                 continue;
             }
 
+            // Si l'envoi réussit
             printf("Message envoyé : %s\n", buffer);
+        } else {
+            printf("Aucune donnée valide reçue depuis l'Arduino.\n");
         }
 
         printf("\n--------------------------------------\n");
-        sleep(2);
+        sleep(2); // Délai entre chaque envoi
     }
 
     // Fermeture des connexions
