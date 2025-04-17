@@ -63,6 +63,14 @@ power_rangers
 - Implement advanced data analysis features.
 - Enhance system scalability.
 
+## Skill
+![C](https://img.shields.io/badge/c-%2300599C.svg?style=for-the-badge&logo=c&logoColor=white)
+![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
+![Microsoft Excel](https://img.shields.io/badge/Microsoft_Excel-217346?style=for-the-badge&logo=microsoft-excel&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
+![Visual Studio Code](https://img.shields.io/badge/Visual%20Studio%20Code-0078d7.svg?style=for-the-badge&logo=visual-studio-code&logoColor=white)
+![ChatGPT](https://img.shields.io/badge/chatGPT-74aa9c?style=for-the-badge&logo=openai&logoColor=white)
+
 ## contributer 
 [![SarahGarf](https://img.shields.io/badge/SarahGarf-222e45?style=for-the-badge&logo=github&logoColor=white)](https://github.com/SarahGarf)
 [![ElineBRD](https://img.shields.io/badge/ElineBRD-222e45?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ElineBRD)
