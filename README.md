@@ -63,6 +63,18 @@ power_rangers
 - Implement advanced data analysis features.
 - Enhance system scalability.
 
+## contributer 
+    - SarahGarf [https://github.com/SarahGarf]
+    - ElineBRD [https://github.com/ElineBRD] 
+    - MDulche [https://github.com/MDulche]
+    - Teo-Gojkovic [https://github.com/Teo-Gojkovic]
+    - pascalmaxime [https://github.com/pascalmaxime]
+
+## everyone's mission 
+    - Teo-Gojkovic : team leader & Client/Server communication 
+    - SarahGarf :  the arduino sensor
+    - MDulche : Client/Server communication & encryption
+    - ElineBRD / pascalmaxime : convert to csv, archives & display
 ## Contact
 
 For any questions or suggestions, feel free to reach out to the team.
