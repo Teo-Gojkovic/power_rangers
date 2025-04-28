@@ -3,6 +3,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include "archives.h"
 
 // Définition des constantes
 #define DECALAGE_CESAR 5 // Décalage pour le chiffrement de César
@@ -23,6 +24,7 @@ int main() {
     struct sockaddr_in server_addr, client_addr;
     char buffer[BUFFER_SIZE];
     socklen_t addr_len = sizeof(client_addr);
+    DataSensor donnees;
 
     // Création de la socket
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -77,12 +79,16 @@ int main() {
             // Déchiffrer le message
             dechiffrer_cesar(buffer);
 
+            donnees = extraction(buffer);
+            writing_csv(donnees);
+
             // Afficher le message traité (déchiffré)
             printf("Message traité reçu : %s\n", buffer);
         }
 
         // Fermer la socket pour cette connexion
         close(new_socket);
+
     }
 
     // Fermer la socket principale (jamais atteint ici à cause de la boucle infinie)
