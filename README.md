@@ -24,23 +24,11 @@ This project is a collaborative effort by our team as part of our school curricu
 
 ## Team Roles
 
-- **Team Lead**: [Name]
-- **Backend Developer**: [Name]
-- **Sensor Integration Specialist**: [Name]
-- **Data Analyst**: [Name]
-
-## Timeline
-
-- **Week 1**: Research and planning
-- **Week 2-3**: Development and integration
-- **Week 4**: Testing and finalization
-
-## How to Run the Project
-
-1. Set up the sensor and server environment.
-2. Start the server application.
-3. Ensure the sensor is configured to send data to the server.
-4. Verify that the data is stored in the CSV file.
+- **Team Lead**: [![Teo GOJKOVIC](https://img.shields.io/badge/Teo_GOJKOVIC-222e45?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Teo-Gojkovic)
+- **Backend Developer**: [![MDulche](https://img.shields.io/badge/MDulche-222e45?style=for-the-badge&logo=github&logoColor=white)](https://github.com/MDulche)
+- **Sensor Integration Specialist**: [![ElineBRD](https://img.shields.io/badge/ElineBRD-222e45?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ElineBRD)
+[![pascalmaxime](https://img.shields.io/badge/pascalmaxime-222e45?style=for-the-badge&logo=github&logoColor=white)](https://github.com/pascalmaxime)
+- **Data Analyst**: [![SarahGarf](https://img.shields.io/badge/SarahGarf-222e45?style=for-the-badge&logo=github&logoColor=white)](https://github.com/SarahGarf)
 
 ## Project structure
 ```
@@ -71,7 +59,6 @@ power_rangers
 ![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![Visual Studio Code](https://img.shields.io/badge/Visual%20Studio%20Code-0078d7.svg?style=for-the-badge&logo=visual-studio-code&logoColor=white)
 ![Microsoft](https://img.shields.io/badge/Microsoft-0078D4?style=for-the-badge&logo=microsoft&logoColor=white)
-![ChatGPT](https://img.shields.io/badge/chatGPT-74aa9c?style=for-the-badge&logo=openai&logoColor=white)
 
 ## contributer 
 [![SarahGarf](https://img.shields.io/badge/SarahGarf-222e45?style=for-the-badge&logo=github&logoColor=white)](https://github.com/SarahGarf)
@@ -80,11 +67,6 @@ power_rangers
 [![MDulche](https://img.shields.io/badge/MDulche-222e45?style=for-the-badge&logo=github&logoColor=white)](https://github.com/MDulche)
 [![Teo GOJKOVIC](https://img.shields.io/badge/Teo_GOJKOVIC-222e45?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Teo-Gojkovic)
 
-## everyone's mission 
-    - Teo-Gojkovic : team leader & Client/Server communication 
-    - SarahGarf :  the arduino sensor
-    - MDulche : Client/Server communication & encryption
-    - ElineBRD / pascalmaxime : convert to csv, archives & display
 ## Contact
 
 For any questions or suggestions, feel free to reach out to the team.
